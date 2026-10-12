@@ -11,6 +11,7 @@ import torch
 from PIL import Image, ImageFilter
 from sam2.build_sam import build_sam2
 from sam2.sam2_image_predictor import SAM2ImagePredictor
+from tqdm import tqdm
 
 
 CHECKPOINT_URL = (
@@ -65,12 +66,11 @@ def main() -> int:
 
     output_dir.mkdir(parents=True, exist_ok=True)
     processed = copied = skipped = failed = 0
-    for source in files:
+    for source in tqdm(files, desc="ファイル処理", unit="件"):
         relative = source.relative_to(input_dir)
         destination = output_dir / relative
         if destination.exists():
             skipped += 1
-            print(f"スキップ（出力済み）: {relative}")
             continue
 
         try:
@@ -85,16 +85,17 @@ def main() -> int:
             point = np.array([[image.width / 2, image.height / 2]], dtype=np.float32)
             with torch.inference_mode():
                 predictor.set_image(image)
-                masks, scores, _ = predictor.predict(
+                masks, _, _ = predictor.predict(
                     point_coords=point,
                     point_labels=np.array([1], dtype=np.int32),
                     multimask_output=True,
                 )
-            if len(scores) == 0:
+            if len(masks) == 0:
                 raise ValueError("人物マスクが取得できませんでした")
 
-            mask = masks[int(np.argmax(scores))]
-            if not np.any(mask):
+            areas = np.count_nonzero(masks, axis=(1, 2))
+            mask = masks[int(np.argmax(areas))]
+            if areas.max() == 0:
                 raise ValueError("人物領域が空です")
             alpha = Image.fromarray(mask.astype(np.uint8) * 255)
             alpha = alpha.filter(ImageFilter.GaussianBlur(radius=1))
@@ -103,7 +104,7 @@ def main() -> int:
             processed += 1
         except Exception as exc:
             failed += 1
-            print(f"失敗: {relative}: {exc}", file=sys.stderr)
+            tqdm.write(f"失敗: {relative}: {exc}", file=sys.stderr)
 
     print(f"完了: PNG {processed}件 / その他コピー {copied}件 / スキップ {skipped}件 / 失敗 {failed}件")
     return 1 if failed else 0
