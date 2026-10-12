@@ -1,0 +1,8 @@
+{
+  "provider": "Poly Haven",
+  "license": "CC0",
+  "asset_type": "hdris",
+  "environment": "indoor",
+  "limit": 200,
+  "max_width": 2048
+}
