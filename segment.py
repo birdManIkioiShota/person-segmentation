@@ -65,14 +65,10 @@ def main() -> int:
             return 1
 
     output_dir.mkdir(parents=True, exist_ok=True)
-    processed = copied = skipped = failed = 0
+    processed = copied = failed = 0
     for source in tqdm(files, desc="ファイル処理", unit="件"):
         relative = source.relative_to(input_dir)
         destination = output_dir / relative
-        if destination.exists():
-            skipped += 1
-            continue
-
         try:
             destination.parent.mkdir(parents=True, exist_ok=True)
             if source.suffix.lower() != ".png":
@@ -106,7 +102,7 @@ def main() -> int:
             failed += 1
             tqdm.write(f"失敗: {relative}: {exc}", file=sys.stderr)
 
-    print(f"完了: PNG {processed}件 / その他コピー {copied}件 / スキップ {skipped}件 / 失敗 {failed}件")
+    print(f"完了: PNG {processed}件 / その他コピー {copied}件 / 失敗 {failed}件")
     return 1 if failed else 0
 
 
