@@ -1,7 +1,7 @@
 [project]
 name = "person-segmentation"
 version = "0.1.0"
-description = "SAM 2.1による人物切り抜き用スクリプト"
+description = "SAM 2.1による人物切り抜きと背景合成プレビュー"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "numpy>=1.26,<2",
